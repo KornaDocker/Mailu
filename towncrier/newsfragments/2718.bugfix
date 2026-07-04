@@ -1,0 +1,1 @@
+Prevent creating a user or alias whose address only differs in letter case from an existing user/alias (the duplicate check is now case-insensitive).

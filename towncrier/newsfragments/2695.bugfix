@@ -1,0 +1,1 @@
+Fix 500 Internal Server Error when creating a user or alias that duplicates an existing one differing only by letter case; the duplicate is now correctly rejected.

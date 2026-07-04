@@ -16,9 +16,13 @@ from alembic.operations import Operations
 
 from mailu import models
 
+# Resolve the migration next to the `mailu` package: in the repo tree and in the
+# flattened container layout the Dockerfile builds (`COPY migrations/ ./migrations/`
+# and `COPY mailu/ ./mailu/`), `migrations/` and `mailu/` are siblings, whereas the
+# `core/admin/` prefix only exists in the repo.
 MIGRATION = (
-    pathlib.Path(__file__).resolve().parents[2]
-    / 'core' / 'admin' / 'migrations' / 'versions' / '9a5866105f5a_.py'
+    pathlib.Path(models.__file__).resolve().parent.parent
+    / 'migrations' / 'versions' / '9a5866105f5a_.py'
 )
 
 

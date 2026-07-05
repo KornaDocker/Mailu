@@ -163,7 +163,7 @@ class Domain(Resource):
             return { 'code': 400, 'message': f'Domain {domain} is not a valid domain'}, 400
         domain_found = models.Domain.query.get(domain)
         if not domain_found:
-            return { 'code': 404, 'message': f'Domain {data["name"]} does not exist'}, 404
+            return { 'code': 404, 'message': f'Domain {domain} does not exist'}, 404
         data = api.payload
 
         if 'alternatives' in data:

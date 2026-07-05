@@ -1220,7 +1220,9 @@ class AliasSchema(BaseSchema):
     note = fields.String(allow_none=True)
     hostname = fields.String(allow_none=True)
     owner_email = fields.String(allow_none=True, dump_only=True)
-    disabled = fields.Boolean(load_default=False, dump_default=False)
+    # No load_default: in merge mode (config-import --update) an omitted field must
+    # keep the stored value. On create the model column default (False) applies.
+    disabled = fields.Boolean(dump_default=False)
 
 
 @mapped

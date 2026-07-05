@@ -1,0 +1,1 @@
+Return a proper 4xx status instead of HTTP 500 when the admin API is given malformed input (a non-existent domain in PATCH /domain, or an invalid reply_startdate/reply_enddate in POST/PATCH /user).

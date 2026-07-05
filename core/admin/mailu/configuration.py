@@ -167,6 +167,7 @@ class ConfigManager:
         self.config['HOSTNAMES'] = ','.join(hostnames)
         self.config['HOSTNAME'] = hostnames[0]
         self.config['DEFAULT_SPAM_THRESHOLD'] = int(self.config['DEFAULT_SPAM_THRESHOLD'])
+        self.config['ANONMAIL_MAX_RETRIES'] = int(self.config['ANONMAIL_MAX_RETRIES'])
         self.config['PROXY_AUTH_WHITELIST'] = set(ipaddress.ip_network(cidr, False) for cidr in (cidr.strip() for cidr in self.config['PROXY_AUTH_WHITELIST'].split(',')) if cidr)
         try:
             self.config['MAILU_VERSION'] = open('/version', 'r').read()

@@ -1,0 +1,1 @@
+Coerce ANONMAIL_MAX_RETRIES to an integer so that overriding it via the environment no longer breaks anonymous-alias creation with a TypeError.

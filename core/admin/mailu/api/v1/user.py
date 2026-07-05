@@ -9,6 +9,15 @@ db = models.db
 
 user = api.namespace('user', description='User operations')
 
+def parse_reply_date(value):
+    """ Parse a reply date given as 'YYYY-MM-DD'. Returns a datetime, or None when
+        the value is not a well-formed, in-range date. """
+    try:
+        year, month, day = value.split('-')
+        return datetime.datetime(int(year), int(month), int(day))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
 user_fields_get = api.model('UserGet', {
     'email': fields.String(description='The email address of the user', example='John.Doe@example.com', attribute='_email'),
     'password': fields.String(description="Hash of the user's password; Example='$bcrypt-sha256$v=2,t=2b,r=12$fmsAdJbYAD1gGQIE5nfJq.$zLkQUEs2XZfTpAEpcix/1k5UTNPm0jO'"),
@@ -158,12 +167,14 @@ class Users(Resource):
         if 'reply_body' in data:
             user_new.reply_body = data['reply_body']
         if 'reply_startdate' in data:
-            year, month, day = data['reply_startdate'].split('-')
-            date = datetime.datetime(int(year), int(month), int(day))
+            date = parse_reply_date(data['reply_startdate'])
+            if date is None:
+                return { 'code': 400, 'message': f'Provided reply_startdate {data["reply_startdate"]!r} is not a valid date (expected YYYY-MM-DD)'}, 400
             user_new.reply_startdate = date
         if 'reply_enddate' in data:
-            year, month, day = data['reply_enddate'].split('-')
-            date = datetime.datetime(int(year), int(month), int(day))
+            date = parse_reply_date(data['reply_enddate'])
+            if date is None:
+                return { 'code': 400, 'message': f'Provided reply_enddate {data["reply_enddate"]!r} is not a valid date (expected YYYY-MM-DD)'}, 400
             user_new.reply_enddate = date
         if 'displayed_name' in data:
             user_new.displayed_name = data['displayed_name']
@@ -252,12 +263,14 @@ class User(Resource):
         if 'reply_body' in data:
             user_found.reply_body = data['reply_body']
         if 'reply_startdate' in data:
-            year, month, day = data['reply_startdate'].split('-')
-            date = datetime.datetime(int(year), int(month), int(day))
+            date = parse_reply_date(data['reply_startdate'])
+            if date is None:
+                return { 'code': 400, 'message': f'Provided reply_startdate {data["reply_startdate"]!r} is not a valid date (expected YYYY-MM-DD)'}, 400
             user_found.reply_startdate = date
         if 'reply_enddate' in data:
-            year, month, day = data['reply_enddate'].split('-')
-            date = datetime.datetime(int(year), int(month), int(day))
+            date = parse_reply_date(data['reply_enddate'])
+            if date is None:
+                return { 'code': 400, 'message': f'Provided reply_enddate {data["reply_enddate"]!r} is not a valid date (expected YYYY-MM-DD)'}, 400
             user_found.reply_enddate = date
         if 'displayed_name' in data:
             user_found.displayed_name = data['displayed_name']

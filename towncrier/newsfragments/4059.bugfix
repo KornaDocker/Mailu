@@ -1,0 +1,1 @@
+Stop config-import --update from silently re-enabling a disabled alias when the imported entry omits the disabled field (merge mode now keeps the stored value).

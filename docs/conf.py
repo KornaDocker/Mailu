@@ -18,6 +18,7 @@ pygments_style = 'sphinx'
 todo_include_todos = False
 html_theme = 'sphinx_rtd_theme'
 html_title = 'Mailu, Docker based mail server'
+html_favicon = 'assets/logomark.png'
 html_static_path = []
 htmlhelp_basename = 'Mailudoc'
 

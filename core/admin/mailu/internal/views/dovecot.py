@@ -7,9 +7,18 @@ import socket
 import os
 import sqlalchemy.exc
 
+def _get_user_or_404(user_email):
+    """ Look up a user by their (possibly malformed) address, returning a clean
+        404 rather than a 500 when the address is not a valid stored e-mail. """
+    try:
+        user = models.User.query.get(user_email)
+    except sqlalchemy.exc.StatementError:
+        user = None
+    return user or flask.abort(404)
+
 @internal.route("/dovecot/passdb/<path:user_email>")
 def dovecot_passdb_dict(user_email):
-    user = models.User.query.get(user_email) or flask.abort(404)
+    user = _get_user_or_404(user_email)
     allow_nets = []
     allow_nets.append(app.config["SUBNET"])
     if app.config["SUBNET6"]:
@@ -39,7 +48,7 @@ def dovecot_userdb_dict(user_email):
 
 @internal.route("/dovecot/quota/<ns>/<path:user_email>", methods=["POST"])
 def dovecot_quota(ns, user_email):
-    user = models.User.query.get(user_email) or flask.abort(404)
+    user = _get_user_or_404(user_email)
     if ns == "storage":
         user.quota_bytes_used = flask.request.get_json()
         user.dont_change_updated_at()
@@ -54,5 +63,5 @@ def dovecot_sieve_name(script, user_email):
 
 @internal.route("/dovecot/sieve/data/default/<path:user_email>")
 def dovecot_sieve_data(user_email):
-    user = models.User.query.get(user_email) or flask.abort(404)
+    user = _get_user_or_404(user_email)
     return flask.jsonify(flask.render_template("default.sieve", user=user))

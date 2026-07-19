@@ -5,6 +5,7 @@ from flask import current_app as app
 import flask
 import flask_login
 import base64
+import binascii
 import sqlalchemy.exc
 import urllib
 
@@ -92,26 +93,31 @@ def basic_authentication():
     authorization = flask.request.headers.get("Authorization")
     if authorization and authorization.startswith("Basic "):
         encoded = authorization.replace("Basic ", "")
-        user_email, password = base64.b64decode(encoded).split(b":", 1)
-        user_email = user_email.decode("utf8")
-        if utils.limiter.should_rate_limit_user(user_email, client_ip):
-            response = flask.Response(status=401)
-            response.headers["WWW-Authenticate"] = 'Basic realm="Authentication rate limit for this username exceeded"'
-            response.headers['Retry-After'] = '60'
-            return response
         try:
-            user = models.User.query.get(user_email) if '@' in user_email else None
-        except sqlalchemy.exc.StatementError as exc:
-            exc = str(exc).split('\n', 1)[0]
-            app.logger.warn(f'Invalid user {user_email!r}: {exc}')
-        else:
-            if user is not None and nginx.check_credentials(user, password.decode('utf-8'), client_ip, "web", flask.request.headers.get('X-Real-Port', None), user_email):
-                response = flask.Response()
-                response.headers["X-User"] = models.IdnaEmail.process_bind_param(flask_login, user.email, "")
-                utils.limiter.exempt_ip_from_ratelimits(client_ip)
+            user_email, password = base64.b64decode(encoded).split(b":", 1)
+            user_email = user_email.decode("utf8")
+        except (binascii.Error, ValueError, UnicodeDecodeError):
+            # malformed header: fall through to the generic 401 below
+            user_email = None
+        if user_email is not None:
+            if utils.limiter.should_rate_limit_user(user_email, client_ip):
+                response = flask.Response(status=401)
+                response.headers["WWW-Authenticate"] = 'Basic realm="Authentication rate limit for this username exceeded"'
+                response.headers['Retry-After'] = '60'
                 return response
-            # We failed check_credentials
-            utils.limiter.rate_limit_user(user_email, client_ip) if user else utils.limiter.rate_limit_ip(client_ip, user_email)
+            try:
+                user = models.User.query.get(user_email) if '@' in user_email else None
+            except sqlalchemy.exc.StatementError as exc:
+                exc = str(exc).split('\n', 1)[0]
+                app.logger.warn(f'Invalid user {user_email!r}: {exc}')
+            else:
+                if user is not None and nginx.check_credentials(user, password.decode('utf-8'), client_ip, "web", flask.request.headers.get('X-Real-Port', None), user_email):
+                    response = flask.Response()
+                    response.headers["X-User"] = models.IdnaEmail.process_bind_param(flask_login, user.email, "")
+                    utils.limiter.exempt_ip_from_ratelimits(client_ip)
+                    return response
+                # We failed check_credentials
+                utils.limiter.rate_limit_user(user_email, client_ip) if user else utils.limiter.rate_limit_ip(client_ip, user_email)
     response = flask.Response(status=401)
     response.headers["WWW-Authenticate"] = 'Basic realm="Login Required"'
     return response

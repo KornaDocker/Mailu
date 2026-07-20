@@ -159,7 +159,10 @@ def postfix_sender_login(sender):
     localpart = localpart[:next((i for i, ch in enumerate(localpart) if ch in flask.current_app.config.get('RECIPIENT_DELIMITER')), None)]
     destinations = set(models.Email.resolve_destination(localpart, domain_name, True) or [])
     destinations.update(wildcard_senders)
-    destinations.update(i[0] for i in models.User.query.filter_by(allow_spoofing=True).with_entities(models.User.email).all())
+    # allow_spoofing lets a user authenticate as other senders, but only within
+    # their own domain — scoping the lookup to the sender's domain prevents a
+    # domain manager from granting themselves cross-domain spoofing (#2686).
+    destinations.update(i[0] for i in models.User.query.filter_by(allow_spoofing=True, domain_name=domain_name).with_entities(models.User.email).all())
     if destinations:
         return flask.jsonify(",".join(idna_encode(destinations)))
     return flask.abort(404)
